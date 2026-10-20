@@ -1,18 +1,3 @@
-/*
- * Front-end da aplicação "Minhas Tarefas".
- * Conversa com a API REST (mesma origem, então não precisa de CORS).
- *
- * Organização do arquivo:
- *   1. Elementos da página e estado
- *   2. Comunicação com a API
- *   3. Mensagens e troca de telas
- *   4. Login e cadastro
- *   5. Tarefas
- *   6. Inicialização
- */
-
-/* ================= 1. Elementos da página e estado ================= */
-
 const telaLogin = document.getElementById('tela-login');
 const telaTarefas = document.getElementById('tela-tarefas');
 const caixaMensagem = document.getElementById('mensagem');
@@ -68,11 +53,19 @@ async function chamarApi(url, metodo = 'GET', corpo) {
   return dados;
 }
 
-// Junta o erro geral com os erros de cada campo (quando for erro de validação)
 function montarMensagemDeErro(dados, status) {
   if (!dados) return 'Erro ' + status;
-  const detalhes = dados.campos ? Object.values(dados.campos).join('; ') : '';
-  return detalhes ? dados.erro + ': ' + detalhes : dados.erro;
+
+  let detalhes = '';
+  if (dados.campos) {
+    for (const campo in dados.campos) {
+      if (detalhes) detalhes += '; ';
+      detalhes += dados.campos[campo];
+    }
+  }
+
+  if (detalhes) return dados.erro + ': ' + detalhes;
+  return dados.erro;
 }
 
 /* ================= 3. Mensagens e troca de telas ================= */
@@ -131,7 +124,15 @@ async function entrar(email, senha) {
 }
 
 async function cadastrar(dados) {
-  await chamarApi('/usuarios', 'POST', { ...dados, ativo: true });
+  const novoUsuario = {
+    nome: dados.nome,
+    email: dados.email,
+    idade: dados.idade,
+    senha: dados.senha,
+    ativo: true,
+  };
+
+  await chamarApi('/usuarios', 'POST', novoUsuario);
   // Depois de criar a conta, já entra com ela
   await entrar(dados.email, dados.senha);
 }
@@ -211,18 +212,37 @@ async function carregarTarefas() {
 
 // Aplica o filtro escolhido (todas / pendentes / concluídas)
 function tarefasVisiveis() {
-  if (estado.filtro === 'pendentes') return estado.tarefas.filter(t => !t.concluida);
-  if (estado.filtro === 'concluidas') return estado.tarefas.filter(t => t.concluida);
-  return estado.tarefas;
+  if (estado.filtro === 'todas') return estado.tarefas;
+
+  const tarefas = [];
+  for (let i = 0; i < estado.tarefas.length; i++) {
+    const tarefa = estado.tarefas[i];
+
+    if (estado.filtro === 'pendentes' && !tarefa.concluida) {
+      tarefas.push(tarefa);
+    }
+    if (estado.filtro === 'concluidas' && tarefa.concluida) {
+      tarefas.push(tarefa);
+    }
+  }
+  return tarefas;
 }
 
 function desenharTarefas() {
   const visiveis = tarefasVisiveis();
 
-  listaTarefas.replaceChildren(...visiveis.map(criarItemDaTarefa));
+  listaTarefas.textContent = '';
+  for (let i = 0; i < visiveis.length; i++) {
+    const item = criarItemDaTarefa(visiveis[i]);
+    listaTarefas.appendChild(item);
+  }
+
   listaVazia.hidden = visiveis.length > 0;
 
-  const pendentes = estado.tarefas.filter(t => !t.concluida).length;
+  let pendentes = 0;
+  for (let i = 0; i < estado.tarefas.length; i++) {
+    if (!estado.tarefas[i].concluida) pendentes++;
+  }
   contador.textContent = pendentes + ' pendente(s) de ' + estado.tarefas.length;
 }
 
@@ -310,13 +330,18 @@ botaoCancelarEdicao.addEventListener('click', finalizarEdicao);
 
 /* ----- Filtros ----- */
 
-document.querySelectorAll('.filtro').forEach(botao => {
+const botoesDeFiltro = document.querySelectorAll('.filtro');
+for (let i = 0; i < botoesDeFiltro.length; i++) {
+  const botao = botoesDeFiltro[i];
   botao.addEventListener('click', () => {
     estado.filtro = botao.dataset.filtro;
-    document.querySelectorAll('.filtro').forEach(b => b.classList.toggle('ativa', b === botao));
+    for (let j = 0; j < botoesDeFiltro.length; j++) {
+      const outroBotao = botoesDeFiltro[j];
+      outroBotao.classList.toggle('ativa', outroBotao === botao);
+    }
     desenharTarefas();
   });
-});
+}
 
 /* ================= 6. Inicialização ================= */
 

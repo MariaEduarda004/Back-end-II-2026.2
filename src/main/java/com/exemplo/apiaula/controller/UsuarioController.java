@@ -6,6 +6,7 @@ import com.exemplo.apiaula.dto.UsuarioRequest;
 import com.exemplo.apiaula.dto.UsuarioResponse;
 import com.exemplo.apiaula.service.UsuarioService;
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,12 +37,14 @@ public class UsuarioController {
     }
 
     @GetMapping("/{id}")
+    @SecurityRequirement(name = "bearerAuth")
     public UsuarioResponse buscar(@PathVariable Long id,
             @RequestAttribute(ATRIBUTO_USUARIO_LOGADO) Long usuarioLogadoId) {
         return service.buscarPorId(id, usuarioLogadoId);
     }
 
     @PutMapping("/{id}")
+    @SecurityRequirement(name = "bearerAuth")
     public UsuarioResponse atualizar(@PathVariable Long id,
             @RequestAttribute(ATRIBUTO_USUARIO_LOGADO) Long usuarioLogadoId,
             @RequestBody @Valid UsuarioRequest request) {
@@ -49,6 +52,7 @@ public class UsuarioController {
     }
 
     @DeleteMapping("/{id}")
+    @SecurityRequirement(name = "bearerAuth")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void excluir(@PathVariable Long id,
             @RequestAttribute(ATRIBUTO_USUARIO_LOGADO) Long usuarioLogadoId) {

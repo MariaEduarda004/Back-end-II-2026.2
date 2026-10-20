@@ -83,6 +83,18 @@ Só o cadastro (`POST /usuarios`) e o login são públicos. Todas as outras rota
 | DELETE | `/tarefas/{id}` | — | 204 | 401, 404 |
 | GET | `/tarefas/exportar/json` | — | 200 (baixa o arquivo `tarefas.json`) | 401 |
 
+### Testar rotas protegidas pelo Swagger
+
+O Swagger é gerado automaticamente pelo **springdoc-openapi** a partir dos controllers e DTOs da aplicação. A dependência já está no `pom.xml`; a classe `OpenApiConfig` configura o esquema Bearer, e as anotações `@SecurityRequirement` indicam quais operações exigem login.
+
+1. Abra o Swagger em <http://localhost:8080/swagger-ui.html>.
+2. Execute `POST /usuarios` para criar uma conta.
+3. Execute `POST /auth/login` usando o e-mail e a senha dessa conta. Copie o valor de `token` da resposta.
+4. Clique em **Authorize**, cole o token e confirme. Cole somente o token, sem escrever `Bearer `; o Swagger monta esse cabeçalho.
+5. Agora execute as operações protegidas, como as rotas de `/tarefas` e de consulta/alteração/exclusão em `/usuarios`.
+
+O cadastro e o login não precisam de token. A definição OpenAPI também fica disponível em <http://localhost:8080/v3/api-docs>.
+
 `Tarefa` é a segunda entidade: cada tarefa pertence a **um** usuário (relação N:1), o usuário dono é o que está logado.
 
 JSON de cadastro e de login:

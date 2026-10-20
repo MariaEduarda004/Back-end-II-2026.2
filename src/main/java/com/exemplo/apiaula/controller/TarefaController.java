@@ -8,6 +8,7 @@ import com.exemplo.apiaula.service.ExportacaoService;
 import com.exemplo.apiaula.service.TarefaService;
 import jakarta.validation.Valid;
 import java.util.List;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 // Todas as rotas exigem login e trabalham apenas com as tarefas do usuário logado
 @RestController
 @RequestMapping("/tarefas")
+@SecurityRequirement(name = "bearerAuth")
 public class TarefaController {
 
     private final TarefaService service;
