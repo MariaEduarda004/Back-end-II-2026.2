@@ -1,0 +1,26 @@
+meta {
+  name: Criar tarefa
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://localhost:8080/tarefas
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "titulo": "Estudar Spring",
+    "concluida": false
+  }
+}
