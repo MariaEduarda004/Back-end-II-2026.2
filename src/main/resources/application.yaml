@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: backend-ii-aula
+  profiles:
+    default: h2

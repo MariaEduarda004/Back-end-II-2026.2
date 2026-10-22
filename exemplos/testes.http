@@ -1,0 +1,20 @@
+### Listar (vazio inicialmente)
+GET http://localhost:8080/usuarios
+
+### Cadastrar
+POST http://localhost:8080/usuarios
+Content-Type: application/json
+
+{"nome":"Ana","email":"ana@exemplo.com","idade":20}
+
+### Buscar
+GET http://localhost:8080/usuarios/1
+
+### Atualizar
+PUT http://localhost:8080/usuarios/1
+Content-Type: application/json
+
+{"nome":"Ana Silva","email":"ana@exemplo.com","idade":21}
+
+### Excluir
+DELETE http://localhost:8080/usuarios/1

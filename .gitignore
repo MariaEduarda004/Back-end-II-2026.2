@@ -1,6 +1,5 @@
-target/
+.gradle/
+build/
 .idea/
-.vscode/
 *.iml
-*.log
 .env

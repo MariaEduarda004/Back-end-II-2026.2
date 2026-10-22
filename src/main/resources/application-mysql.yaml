@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/backend_aula}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update # somente para estudo; em produção utilize migrações
+    show-sql: true
