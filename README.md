@@ -1,12 +1,14 @@
 # Mini manual — Como instalar, executar e implementar a API de Tarefas (com login)
 
-**Desenvolvimento Back-end II · TSI-4AN · Spring Boot 3.3.4 · Java 17 (compatível com Java 21)**
+**Desenvolvimento Back-end II · TSI-4AN · Spring Boot 3.5.15 · Java 17 (compatível com Java 21)**
 
 Este manual vai de **"ainda não instalei as ferramentas"** até **"executei a API e criei minha própria entidade com CRUD"**. O passo a passo principal considera **Windows + PowerShell + VS Code**. Quem usa Spring Tool Suite (STS) encontra orientações ao final.
 
-> **Importante:** não é necessário instalar MySQL para começar. O projeto tem um perfil **H2**, um banco de dados em memória. Também não é obrigatório substituir o Java já usado por outros programas: é possível configurar o JDK apenas para o terminal de desenvolvimento.
+> **Importante:** não é necessário instalar MySQL para começar. O projeto usa **H2 como banco padrão**, em memória; MySQL é uma opção para quem precisa de persistência externa. Também não é obrigatório substituir o Java já usado por outros programas: é possível configurar o JDK apenas para o terminal de desenvolvimento.
 
 ---
+
+**Escopo:** projeto educacional. Os tokens de sessão são UUIDs armazenados em memória, não JWT; a proteção das rotas usa um `HandlerInterceptor`, não uma configuração completa do Spring Security. Não exponha esta aplicação publicamente sem revisar autenticação, sessões, segredos e configurações.
 
 ## 1. Ferramentas e verificação inicial
 
@@ -146,18 +148,20 @@ cd Back-end-II-2026.2
 
 Se já baixou pelo navegador, extraia o ZIP e **abra a pasta onde fica o `pom.xml`**.
 
+> Os comandos devem ser executados na raiz do repositório. Se o endereço do GitHub mudar ou o repositório não estiver acessível, baixe o arquivo ZIP pela página do projeto e abra sua pasta raiz.
 
-## 3. Rodar sem instalar banco (perfil H2) — comece por aqui
+
+## 3. Rodar sem instalar banco (H2 padrão) — comece por aqui
 
 **Na pasta que contém `pom.xml`**, execute no PowerShell:
 
 ```powershell
-mvn clean spring-boot:run "-Dspring-boot.run.profiles=h2"
+mvn clean spring-boot:run
 ```
 
 Na primeira execução, o Maven pode precisar de conexão à internet para baixar dependências. Aguarde no terminal a mensagem `Started ApiAulaApplication` **sem erro**. Então abra:
 
-- **Front-end (cadastro/login e tarefas):** <http://localhost:8080/>
+- **Front-end:** login em <http://localhost:8080/>, cadastro em <http://localhost:8080/front/cadastro.html> e tarefas em <http://localhost:8080/front/tarefas.html>.
 - **Swagger UI:** <http://localhost:8080/swagger-ui.html>
 - **Console do H2:** <http://localhost:8080/h2-console>
 
@@ -171,12 +175,30 @@ Password: (deixe vazio)
 
 No projeto, o H2 foi configurado **em memória**. Isso significa que **os dados somem quando a aplicação para**. Para encerrar o servidor, use `Ctrl + C` no terminal.
 
-**Como o Spring escolhe o banco?** O arquivo `application.properties` contém a configuração base (MySQL). Quando você ativa o perfil `h2`, o Spring carrega também `application-h2.properties` e substitui as configurações correspondentes. O código de Controller, Service e Repository não precisa mudar.
+**Como o Spring escolhe o banco?** O `application.properties` é carregado por padrão e configura o H2 em memória. Para usar MySQL, ative o perfil `mysql`; o Spring carrega `application-mysql.properties` junto com as configurações padrão e substitui as configurações do banco. O código de Controller, Service e Repository não precisa mudar.
 
-### 3.1. Entendendo os arquivos de configuração
+### 3.1. Fluxo de uso do front-end
 
-- `src/main/resources/application.properties`: configurações padrão, incluindo `DB_URL`, `DB_USERNAME` e `DB_PASSWORD` para MySQL.
-- `src/main/resources/application-h2.properties`: configura o banco `jdbc:h2:mem:api_aula`, usuário `sa` e console web H2.
+1. Acesse <http://localhost:8080/>. Essa é a tela de login.
+2. Se ainda não tiver uma conta, selecione **Criar conta**. Após o cadastro, o sistema autentica o usuário e abre a lista de tarefas.
+3. Se já tiver uma conta, informe e-mail e senha para entrar.
+4. Na tela de tarefas, adicione, edite, conclua ou exclua tarefas. Os filtros e a exportação JSON são recursos adicionais para explorar.
+5. Clique em **Sair** para encerrar a sessão.
+
+O login fica em `src/main/resources/static/index.html`. As outras páginas e o CSS ficam em `src/main/resources/static/front`. Os arquivos JavaScript ficam em `src/main/resources/static/js`: `login.js` cuida do login, `cadastro.js` do cadastro, `tarefas.js` das tarefas e `api.js` reúne a comunicação compartilhada com a API.
+
+```text
+index.html (login)
+    ├── front/cadastro.html → js/cadastro.js ─┐
+    └── js/login.js ──────────────────────────┴→ front/tarefas.html
+                                                      │
+                                  js/tarefas.js → js/api.js → API REST
+```
+
+### 3.2. Entendendo os arquivos de configuração
+
+- `src/main/resources/application.properties`: configuração padrão do H2 (`jdbc:h2:mem:api_aula`), usuário `sa` e console web H2.
+- `src/main/resources/application-mysql.properties`: configurações do perfil MySQL; permite informar `DB_URL`, `DB_USERNAME` e `DB_PASSWORD` por variáveis de ambiente.
 - `spring.jpa.hibernate.ddl-auto=update`: permite ao Hibernate tentar atualizar tabelas no desenvolvimento. 
 - `spring.jpa.show-sql=true`: imprime instruções SQL no terminal, útil para aprender como o JPA persiste entidades.
 
@@ -188,7 +210,7 @@ No projeto, o H2 foi configurado **em memória**. Isso significa que **os dados 
 2. Aguarde a importação do projeto Java e o carregamento das dependências Maven.
 3. Abra o terminal integrado (**Terminal → New Terminal** ou `Ctrl + '`), selecione PowerShell e execute o comando da **seção 3**.
 4. Para explorar o código, abra `src/main/java/com/exemplo/apiaula/ApiAulaApplication.java` e localize o método `main`.
-5. É possível usar o **Spring Boot Dashboard** ou o botão **Run**, mas lembre-se de ativar o perfil `h2`. Pelo terminal, a configuração é explícita e mais simples para a primeira aula.
+5. É possível usar o **Spring Boot Dashboard** ou o botão **Run** sem ativar um perfil: o H2 já é a configuração padrão.
 6. Se o VS Code escolher o JDK incorreto: `Ctrl+Shift+P` → **Java: Configure Java Runtime** → selecione o JDK 17 ou 21 compatível.
 
 ---
@@ -201,7 +223,7 @@ O cadastro (`POST /usuarios`) e o login (`POST /auth/login`) são públicos. As 
 |---|---|---|---|---|
 | POST | `/usuarios` (cadastro) | JSON | 201 | 400, 409 |
 | POST | `/auth/login` | JSON | 200 (retorna `token`) | 400, 401 |
-| POST | `/auth/logout` | — | 204 | 401 quando token ausente/inválido, conforme implementação |
+| POST | `/auth/logout` | — | 204 | 204 mesmo sem token (comportamento atual) |
 | GET | `/usuarios/{id}` | — | 200 | 401, 403, 404 |
 | PUT | `/usuarios/{id}` | JSON | 200 | 400, 401, 403, 404, 409 |
 | DELETE | `/usuarios/{id}` | — | 204 | 401, 403, 409 |
@@ -326,15 +348,25 @@ src/main/java/com/exemplo/apiaula/
 ├── config/                   interceptor de autenticação, configurações web/BCrypt
 └── exception/                exceções e tratamento HTTP
 src/main/resources/
-├── application.properties    configuração base (MySQL)
-├── application-h2.properties configuração para H2
-└── static/                   index.html, style.css e app.js (front-end)
+├── application.properties      configuração padrão (H2 em memória)
+├── application-mysql.properties configuração opcional para MySQL
+└── static/
+    ├── index.html            tela de login (endereço raiz)
+    ├── front/                páginas HTML e CSS
+    │   ├── cadastro.html     cadastro de usuário
+    │   ├── tarefas.html      operações com tarefas
+    │   └── style.css
+    └── js/                   JavaScript do front-end
+        ├── api.js            chamadas compartilhadas à API
+        ├── login.js
+        ├── cadastro.js
+        └── tarefas.js
 ```
 
 **Fluxo simplificado de uma requisição protegida:**
 
 ```text
-Front-end (app.js)
+front/tarefas.html → js/tarefas.js → js/api.js
       │ HTTP + JSON + token
       ▼
 AutenticacaoInterceptor
@@ -357,22 +389,23 @@ Banco H2 ou MySQL
 
 ---
 
-## 8. Opcional — rodar com MySQL em vez de H2
+## 8. Opcional — rodar com MySQL
 
-**Não faça esta etapa antes de conseguir executar com H2.**
+Use esta opção se precisar manter os dados após reiniciar a aplicação. Primeiro, confirme que o H2 padrão está funcionando.
 
 1. Instale/configure um servidor MySQL e um cliente SQL de sua preferência.
 2. Execute [`database/script.sql`](database/script.sql), que cria o banco `api_aula`, as tabelas `usuarios` e `tarefas` e a chave estrangeira.
-3. Defina as variáveis na **sessão atual** do PowerShell:
+3. **Atenção ao esquema:** o `script.sql` incluído no arquivo original usa `INT` nos IDs da tabela `usuarios`, enquanto a entidade Java usa `Long`. Antes de usar MySQL com esse script, padronize os identificadores como `BIGINT` (inclusive `tarefas.usuario_id`). No pacote revisado, o script foi alinhado.
+4. Defina as variáveis na **sessão atual** do PowerShell:
 
    ```powershell
    $env:DB_URL = "jdbc:mysql://localhost:3306/api_aula"
    $env:DB_USERNAME = "root"  # somente para estudo local; prefira um usuário próprio
    $env:DB_PASSWORD = "SUA_SENHA_LOCAL"
-   mvn spring-boot:run
+   mvn spring-boot:run "-Dspring-boot.run.profiles=mysql"
    ```
 
-4. Teste os mesmos endpoints. Ao contrário do perfil H2 em memória, os registros devem permanecer após o reinício do Spring Boot.
+5. Teste os mesmos endpoints. Ao contrário do H2 em memória, os registros devem permanecer após o reinício do Spring Boot.
 
 > **Segurança:** não inclua senhas reais no README nem publique credenciais no Git. Prefira variáveis de ambiente e usuários com permissões limitadas. O MySQL utiliza um servidor de banco e não fica "dentro" da aplicação Java como o H2 embutido.
 
@@ -386,7 +419,7 @@ Banco H2 ou MySQL
 | `Error: -classpath requires class path specification` | Verifique `Get-Command mvn`; pode estar apontando para `...\apache-maven\src\bin` (distribuição de código-fonte) em vez do `bin` da distribuição binária com `lib/` e `boot/`. |
 | `JAVA_HOME is not defined correctly` | `JAVA_HOME` deve apontar para a **raiz** do JDK; confira `javac -version`. |
 | `mvn -v` exibe Java diferente do esperado | Verifique `JAVA_HOME`, `Path` e a configuração do terminal/IDE. Java 17 ou 21 são adequados para este projeto. |
-| Erro de conexão com MySQL | Inicie com o perfil H2; se usar MySQL, confira serviço, URL, banco, usuário e senha. |
+| Erro de conexão com MySQL | Sem o perfil `mysql`, a aplicação usa o H2 padrão; ao usar MySQL, confira se o perfil está ativo e verifique serviço, URL, banco, usuário e senha. |
 | `Port 8080 was already in use` | Finalize a aplicação anterior ou configure outra porta (`server.port`). |
 | Classes Lombok parecem sem getters/setters | Aguarde a importação Maven; verifique extensão/processamento de anotações. |
 | 401 ao acessar `/tarefas` | Faça login e envie `Authorization: Bearer <token>`. |
@@ -418,15 +451,32 @@ Alunos que já utilizam **Spring Tool Suite / Spring Tools for Eclipse** podem c
 4. Selecione a pasta **`Back-end-II-2026.2`** (onde está `pom.xml`) e conclua a importação.
 5. Verifique o JDK configurado para o projeto (17 ou 21).
 6. Localize `ApiAulaApplication.java` e abra **Run Configurations** para uma execução Spring Boot.
-7. Em **Program arguments**, informe:
+7. Para usar a configuração padrão H2, não informe argumentos de perfil. Se quiser usar MySQL, informe:
 
    ```text
-   --spring.profiles.active=h2
+   --spring.profiles.active=mysql
    ```
 
 8. Execute como **Spring Boot App**. Com o servidor iniciado, teste `http://localhost:8080/`.
 
 Os nomes dos menus podem variar conforme a versão da IDE. Para depurar, coloque um breakpoint em `TarefaController.cadastrar()` e execute em modo **Debug**, acompanhando a passagem pelo Service e Repository.
+
+---
+
+## 11. Como estudar este projeto por camadas
+
+Para acompanhar o caminho de uma criação de tarefa, abra nesta ordem: `static/js/tarefas.js` → `static/js/api.js` → `config/AutenticacaoInterceptor.java` → `controller/TarefaController.java` → `dto/TarefaRequest.java` → `service/TarefaService.java` → `repository/TarefaRepository.java` → `entity/Tarefa.java`. Ao voltar, observe `TarefaResponse` e o JSON enviado à interface. Veja os diagramas e a explicação detalhada em [FLUXO-DO-SISTEMA.md](docs/FLUXO-DO-SISTEMA.md).
+
+## 12. Verificação final da instalação
+
+1. No terminal, inicie a configuração padrão H2 e confirme que o servidor iniciou sem exceções.
+2. Abra a tela inicial e cadastre um usuário.
+3. Cadastre uma tarefa, edite o título, marque como concluída, filtre e exporte.
+4. Saia e tente listar tarefas sem token: a API deve retornar `401`.
+5. Entre novamente e confirme as tarefas; reiniciando com H2 em memória, elas desaparecem.
+6. Crie outra conta e confirme que ela não vê as tarefas do primeiro usuário.
+
+**Validação do pacote:** esta documentação foi produzida por inspeção estática dos arquivos. A execução real, a compilação e os testes no seu ambiente ainda devem ser realizados; não foram considerados concluídos.
 
 ---
 
@@ -441,4 +491,4 @@ Os nomes dos menus podem variar conforme a versão da IDE. Para depurar, coloque
 - [VS Code — extensões Java e Spring](https://code.visualstudio.com/docs/java/extensions)
 - [Spring Tools (STS)](https://spring.io/tools)
 - [Bruno](https://www.usebruno.com/downloads)
-- [Documentação do Spring Boot 3.3](https://docs.spring.io/spring-boot/3.3/reference/)
+- [Documentação do Spring Boot 3.5](https://docs.spring.io/spring-boot/3.5/reference/)

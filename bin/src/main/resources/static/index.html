@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Minhas Tarefas</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="mensagem" role="alert" hidden></div>
+
+  <section id="tela-login" class="cartao cartao-estreito">
+    <h1>Minhas Tarefas</h1>
+
+    <div class="abas">
+      <button type="button" id="aba-entrar" class="aba ativa">Entrar</button>
+      <button type="button" id="aba-cadastrar" class="aba">Criar conta</button>
+    </div>
+
+    <form id="form-login">
+      <label>E-mail
+        <input name="email" type="email" required autocomplete="username">
+      </label>
+      <label>Senha
+        <input name="senha" type="password" required autocomplete="current-password">
+      </label>
+      <button type="submit">Entrar</button>
+    </form>
+
+    <form id="form-cadastro" hidden>
+      <label>Nome
+        <input name="nome" required maxlength="120">
+      </label>
+      <label>E-mail
+        <input name="email" type="email" required maxlength="150" autocomplete="username">
+      </label>
+      <label>Idade
+        <input name="idade" type="number" min="0" required>
+      </label>
+      <label>Senha (mínimo 6 caracteres)
+        <input name="senha" type="password" required minlength="6" maxlength="72" autocomplete="new-password">
+      </label>
+      <button type="submit">Criar conta</button>
+    </form>
+  </section>
+
+  <!-- TELA 2: tarefas do usuário logado -->
+  <div id="tela-tarefas" hidden>
+    <header>
+      <h1>Minhas Tarefas</h1>
+      <div class="usuario-logado">
+        <span id="nome-usuario"></span>
+        <button type="button" id="botao-sair" class="secundario">Sair</button>
+      </div>
+    </header>
+
+    <main class="cartao">
+      <form id="form-tarefa" class="linha">
+        <input name="titulo" placeholder="O que você precisa fazer?" required maxlength="150">
+        <button type="submit" id="botao-salvar-tarefa">Adicionar</button>
+        <button type="button" id="botao-cancelar-edicao" class="secundario" hidden>Cancelar</button>
+      </form>
+
+      <div class="filtros">
+        <button type="button" class="filtro ativa" data-filtro="todas">Todas</button>
+        <button type="button" class="filtro" data-filtro="pendentes">Pendentes</button>
+        <button type="button" class="filtro" data-filtro="concluidas">Concluídas</button>
+        <span id="contador"></span>
+        <button type="button" id="botao-exportar" class="secundario">Exportar JSON</button>
+      </div>
+
+      <ul id="lista-tarefas"></ul>
+      <p id="lista-vazia" hidden>Nenhuma tarefa por aqui.</p>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
