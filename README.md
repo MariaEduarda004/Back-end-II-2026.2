@@ -1,4 +1,4 @@
-# Back-end II — desafio inicial: Spring Boot + banco de dados + CRUD
+# Back-end II — desafio inicial
 
 ## Objetivo da aula
 
